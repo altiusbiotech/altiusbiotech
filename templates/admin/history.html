@@ -1,0 +1,121 @@
+{% extends 'admin/base.html' %}
+{% block page_title %}Content History{% endblock %}
+{% block page_heading %}Content History & Rollback{% endblock %}
+{% block page_description %}View and restore previous versions of your content{% endblock %}
+{% block content %}
+<style>
+    .history-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .history-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, #2a7c8e, #e9ecef);
+    }
+    .history-item {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-left: 2rem;
+    }
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: -2.75rem;
+        top: 1.5rem;
+        width: 12px;
+        height: 12px;
+        background: #2a7c8e;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px #2a7c8e;
+    }
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .history-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e3a5f;
+    }
+    .history-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .history-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .no-history {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    .no-history-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Saved Content Versions</h3>
+    </div>
+    <div class="card-body">
+        {% if history_entries %}
+        <p style="margin-bottom: 2rem; color: #6c757d;">
+            Automatic backups are created before each content update. You can restore to any previous version by clicking the "Rollback" button.
+        </p>
+
+        <div class="history-timeline">
+            {% for entry in history_entries %}
+            <div class="history-item">
+                <div class="history-header">
+                    <div>
+                        <div class="history-title">{{ entry.description }}</div>
+                        <div class="history-date">
+                            {{ entry.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                    <div class="history-actions">
+                        <a href="{{ url_for('admin_rollback', history_id=entry.id) }}"
+                           class="btn btn-primary"
+                           onclick="return confirm('Are you sure you want to restore this version? Your current content will be backed up first.')">
+                            ↺ Rollback
+                        </a>
+                        <a href="{{ url_for('delete_history', history_id=entry.id) }}"
+                           class="btn btn-danger"
+                           onclick="return confirm('Delete this history entry?')">
+                            Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-history">
+            <div class="no-history-icon">📝</div>
+            <h3>No Content History Yet</h3>
+            <p>History entries will appear here after you make changes to your content.</p>
+            <p style="margin-top: 1rem;">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

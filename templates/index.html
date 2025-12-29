@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="hero-content">
+        <div class="hero-text">
+            <span class="hero-label">{{ content.hero_label }}</span>
+            <h1>{{ content.hero_title }}</h1>
+            <p>{{ content.hero_description }}</p>
+            <div class="hero-buttons">
+                <a href="#products" class="btn btn-primary">Explore Technology</a>
+                <a href="#contact" class="btn btn-secondary">Get Quote</a>
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-box">
+                <h3>{{ content.stat1_number }}</h3>
+                <p>{{ content.stat1_text }}</p>
+            </div>
+            <div class="stat-box">
+                <h3>{{ content.stat2_number }}</h3>
+                <p>{{ content.stat2_text }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features" id="features">
+    <div class="features-container">
+        <div class="section-header">
+            <p class="section-label">{{ content.features_label }}</p>
+            <h2>{{ content.features_title }}</h2>
+            <p>{{ content.features_description }}</p>
+        </div>
+        
+        <div class="features-grid">
+            {% for feature in features %}
+            <div class="feature-box">
+                <div class="feature-icon">
+                    {% if feature.image %}
+                    <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}">
+                    {% endif %}
+                </div>
+                <h3>{{ feature.title }}</h3>
+                <p>{{ feature.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Products Section -->
+<section class="products" id="products">
+    <div class="products-container">
+        <div class="section-header">
+            <p class="section-label">{{ content.products_label }}</p>
+            <h2>{{ content.products_title }}</h2>
+            <p>{{ content.products_description }}</p>
+        </div>
+        
+        <div class="products-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}">
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3>{{ product.title }}</h3>
+                    <p>{{ product.description }}</p>
+                    <a href="#contact" class="product-link">Learn More →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact" id="contact">
+    <div class="contact-container">
+        <div class="contact-info">
+            <p class="contact-tagline">{{ content.contact_tagline }}</p>
+            <h2>{{ content.contact_title }}</h2>
+            <p>{{ content.contact_description }}</p>
+
+            <div class="contact-details">
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div class="contact-text">
+                        <h4>◆ Location</h4>
+                        <p>{{ content.contact_address | replace('\n', '<br>') | safe }}</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">📞</div>
+                    <div class="contact-text">
+                        <h4>◆ Phone</h4>
+                        <p>{{ content.contact_phone }}</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">✉️</div>
+                    <div class="contact-text">
+                        <h4>◆ Email</h4>
+                        <p>{{ content.contact_email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3819.4067!2d96.1478933!3d16.8203331!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30c1eb0053889099%3A0x1c5ca74f767ae95d!2sBeauty%20Heaven%20Aesthetic!5e0!3m2!1sen!2smm!4v1735417200000"
+                allowfullscreen=""
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Altius BioTech Location - Beauty Heaven Aesthetic">
+            </iframe>
+        </div>
+    </div>
+</section>
+{% endblock %}
