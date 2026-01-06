@@ -1,0 +1,51 @@
+{% extends 'admin/base.html' %}
+
+{% block page_heading %}Edit Product{% endblock %}
+{% block page_description %}Update product details{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header"><h3>Edit Product: {{ product.title }}</h3></div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('edit_product', id=product.id) }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {% if product.image %}
+            <div class="form-group">
+                <label>Current Image</label>
+                <div>
+                    <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}" style="max-width: 200px; border-radius: 8px;">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>Upload New Image (Optional)</label>
+                <input type="file" name="product_image" accept="image/*">
+                <small>Leave empty to keep current image. Allowed: JPG, PNG, GIF, WEBP</small>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" name="title" value="{{ product.title }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Order (Number) *</label>
+                    <input type="number" name="order" value="{{ product.order }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description *</label>
+                <textarea name="description" rows="4" required>{{ product.description }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-success">Update Product</button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

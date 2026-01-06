@@ -443,16 +443,64 @@ def add_feature():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/admin/feature/edit/<int:id>', methods=['GET', 'POST'])
+def edit_feature(id):
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    feature = Feature.query.get_or_404(id)
+
+    if request.method == 'POST':
+        feature.title = request.form.get('title')
+        feature.description = request.form.get('description')
+        feature.order = request.form.get('order', 0)
+
+        # Handle feature image upload
+        if 'feature_image' in request.files:
+            image_file = request.files['feature_image']
+            if image_file and image_file.filename:
+                if allowed_file(image_file.filename):
+                    # Delete old image if exists
+                    if feature.image:
+                        old_image_path = os.path.join('static', 'images', 'features', feature.image)
+                        if os.path.exists(old_image_path):
+                            os.remove(old_image_path)
+
+                    # Save new image
+                    filename = secure_filename(image_file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    image_filename = f"feature_{timestamp}_{filename}"
+                    image_path = os.path.join('static', 'images', 'features', image_filename)
+                    os.makedirs(os.path.join('static', 'images', 'features'), exist_ok=True)
+                    image_file.save(image_path)
+                    feature.image = image_filename
+                else:
+                    flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
+                    return redirect(url_for('edit_feature', id=id))
+
+        db.session.commit()
+        flash('Feature updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+
+    return render_template('admin/edit_feature.html', feature=feature)
+
+
 @app.route('/admin/feature/delete/<int:id>')
 def delete_feature(id):
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
-    
+
     feature = Feature.query.get(id)
     if feature:
+        # Delete image file if exists
+        if feature.image:
+            image_path = os.path.join('static', 'images', 'features', feature.image)
+            if os.path.exists(image_path):
+                os.remove(image_path)
         db.session.delete(feature)
         db.session.commit()
-    
+        flash('Feature deleted successfully!', 'success')
+
     return redirect(url_for('admin_dashboard'))
 
 
@@ -494,6 +542,48 @@ def add_product():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/admin/product/edit/<int:id>', methods=['GET', 'POST'])
+def edit_product(id):
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    product = Product.query.get_or_404(id)
+
+    if request.method == 'POST':
+        product.title = request.form.get('title')
+        product.description = request.form.get('description')
+        product.order = request.form.get('order', 0)
+
+        # Handle product image upload
+        if 'product_image' in request.files:
+            image_file = request.files['product_image']
+            if image_file and image_file.filename:
+                if allowed_file(image_file.filename):
+                    # Delete old image if exists
+                    if product.image:
+                        old_image_path = os.path.join('static', 'images', 'products', product.image)
+                        if os.path.exists(old_image_path):
+                            os.remove(old_image_path)
+
+                    # Save new image
+                    filename = secure_filename(image_file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    image_filename = f"product_{timestamp}_{filename}"
+                    image_path = os.path.join('static', 'images', 'products', image_filename)
+                    os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
+                    image_file.save(image_path)
+                    product.image = image_filename
+                else:
+                    flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
+                    return redirect(url_for('edit_product', id=id))
+
+        db.session.commit()
+        flash('Product updated successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+
+    return render_template('admin/edit_product.html', product=product)
+
+
 @app.route('/admin/product/delete/<int:id>')
 def delete_product(id):
     if 'admin' not in session:
@@ -501,8 +591,14 @@ def delete_product(id):
 
     product = Product.query.get(id)
     if product:
+        # Delete image file if exists
+        if product.image:
+            image_path = os.path.join('static', 'images', 'products', product.image)
+            if os.path.exists(image_path):
+                os.remove(image_path)
         db.session.delete(product)
         db.session.commit()
+        flash('Product deleted successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
 
