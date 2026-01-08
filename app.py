@@ -170,8 +170,19 @@ def sitemap():
 @app.route('/robots.txt')
 def robots():
     """Generate robots.txt for search engines"""
-    robots_txt = """User-agent: *
+    robots_txt = """# Allow all crawlers
+User-agent: *
 Allow: /
+
+# Explicitly allow Bing
+User-agent: bingbot
+Allow: /
+
+# Explicitly allow Google
+User-agent: Googlebot
+Allow: /
+
+# Sitemap
 Sitemap: https://altiusbiotech.com/sitemap.xml
 """
     return robots_txt, 200, {'Content-Type': 'text/plain'}
