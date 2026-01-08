@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -147,9 +147,24 @@ def index():
 
 @app.route('/sitemap.xml')
 def sitemap():
-    """Generate sitemap for search engines"""
+    """Generate dynamic sitemap for search engines"""
     from datetime import datetime as dt
-    return render_template('sitemap.xml', now=dt.now()), 200, {'Content-Type': 'application/xml'}
+
+    today = dt.now().strftime('%Y-%m-%d')
+
+    sitemap_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://altiusbiotech.com/</loc>
+    <lastmod>{today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>'''
+
+    response = make_response(sitemap_xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
 
 
 @app.route('/robots.txt')
