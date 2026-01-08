@@ -3,7 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Altius BioTech - Premium Medical Aesthetic Technology{% endblock %}</title>
+    <title>{% block title %}Altius BioTech - Premium Medical Aesthetic Technology | Myanmar{% endblock %}</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block description %}ALTIUS BIOTECH - Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc. CE-certified premium technology for healthcare professionals.{% endblock %}">
+    <meta name="keywords" content="medical aesthetic devices Myanmar, DSE Inc Myanmar, medical equipment Myanmar, aesthetic technology, CE certified medical devices, healthcare equipment Myanmar, ALTIUS BIOTECH">
+    <meta name="author" content="ALTIUS BIOTECH Co., Ltd">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://altiusbiotech.com{% block canonical %}{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://altiusbiotech.com/">
+    <meta property="og:title" content="ALTIUS BIOTECH - Premium Medical Aesthetic Technology">
+    <meta property="og:description" content="Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc.">
+    <meta property="og:image" content="https://altiusbiotech.com{{ url_for('static', filename='images/logo.jpg') }}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://altiusbiotech.com/">
+    <meta property="twitter:title" content="ALTIUS BIOTECH - Premium Medical Aesthetic Technology">
+    <meta property="twitter:description" content="Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc.">
+    <meta property="twitter:image" content="https://altiusbiotech.com{{ url_for('static', filename='images/logo.jpg') }}">
+
+    <!-- Google Structured Data for Logo -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "ALTIUS BIOTECH Co., Ltd",
+      "url": "https://altiusbiotech.com",
+      "logo": "https://altiusbiotech.com{{ url_for('static', filename='images/logo.jpg') }}",
+      "description": "Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "No: 31, Inya Myaing Road, Khayay Myaing Street, Golden Valley 1 Ward",
+        "addressLocality": "Bahan",
+        "addressRegion": "Yangon",
+        "addressCountry": "MM"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+95-95128556",
+        "contactType": "Customer Service",
+        "email": "info@altiusbiotech.com"
+      },
+      "sameAs": [
+        "https://www.facebook.com/altiusbiotech",
+        "https://www.linkedin.com/company/altiusbiotech"
+      ]
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">

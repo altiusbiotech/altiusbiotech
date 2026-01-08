@@ -145,6 +145,23 @@ def index():
     return render_template('index.html', content=content, features=features, products=products)
 
 
+@app.route('/sitemap.xml')
+def sitemap():
+    """Generate sitemap for search engines"""
+    from datetime import datetime as dt
+    return render_template('sitemap.xml', now=dt.now()), 200, {'Content-Type': 'application/xml'}
+
+
+@app.route('/robots.txt')
+def robots():
+    """Generate robots.txt for search engines"""
+    robots_txt = """User-agent: *
+Allow: /
+Sitemap: https://altiusbiotech.com/sitemap.xml
+"""
+    return robots_txt, 200, {'Content-Type': 'text/plain'}
+
+
 @app.route('/contact', methods=['POST'])
 def submit_contact():
     # Get form data
