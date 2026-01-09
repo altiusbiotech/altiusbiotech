@@ -3,6 +3,16 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero" id="home">
+    <!-- Video Background -->
+    {% if content and content.hero_video %}
+    <div class="hero-video-bg">
+        <video autoplay muted loop playsinline id="heroVideo">
+            <source src="{{ url_for('static', filename='videos/' + content.hero_video) }}" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    {% endif %}
+
     <div class="hero-content">
         <div class="hero-text">
             <span class="hero-label">{{ content.hero_label }}</span>
