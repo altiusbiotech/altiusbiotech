@@ -119,19 +119,6 @@
                     <textarea name="hero_description">{{ content.hero_description if content else '' }}</textarea>
                 </div>
 
-                <!-- Hero Video Upload -->
-                <div class="form-group">
-                    <label>Hero Background Video (Optional)</label>
-                    {% if content and content.hero_video %}
-                    <div style="margin-bottom: 1rem;">
-                        <p><strong>Current Video:</strong> {{ content.hero_video }}</p>
-                        <video src="{{ url_for('static', filename='videos/' + content.hero_video) }}" style="max-width: 300px; border-radius: 8px;" controls></video>
-                    </div>
-                    {% endif %}
-                    <input type="file" name="hero_video" accept="video/*">
-                    <small>Upload MP4 video (max 50MB). Leave empty to keep current video or use gradient background.</small>
-                </div>
-
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label>Stat 1 Number</label>

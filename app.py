@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
 from models import db, Content, Feature, Product, Admin, ContentHistory
 
@@ -40,6 +41,14 @@ ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
 def allowed_file(filename):
     """Check if uploaded file has allowed extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Error handler for file too large
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    """Handle file upload exceeding maximum size"""
+    max_size_mb = app.config['MAX_CONTENT_LENGTH'] / (1024 * 1024)
+    flash(f'File is too large. Maximum upload size is {max_size_mb:.0f}MB.', 'danger')
+    return redirect(url_for('admin_dashboard'))
 
 # Security Headers
 @app.after_request
@@ -336,33 +345,6 @@ def update_hero():
         content.stat2_number = request.form.get('stat2_number')
     if request.form.get('stat2_text') is not None:
         content.stat2_text = request.form.get('stat2_text')
-
-    # Handle hero video upload
-    if 'hero_video' in request.files:
-        video_file = request.files['hero_video']
-        if video_file and video_file.filename:
-            # Allowed video extensions
-            allowed_video_extensions = {'mp4', 'webm', 'mov', 'avi'}
-            if '.' in video_file.filename and video_file.filename.rsplit('.', 1)[1].lower() in allowed_video_extensions:
-                # Delete old video if exists
-                if content.hero_video:
-                    old_video_path = os.path.join('static', 'videos', content.hero_video)
-                    if os.path.exists(old_video_path):
-                        os.remove(old_video_path)
-
-                # Save new video
-                filename = secure_filename(video_file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                video_filename = f"hero_{timestamp}_{filename}"
-                video_path = os.path.join('static', 'videos', video_filename)
-
-                # Create videos directory if it doesn't exist
-                os.makedirs(os.path.join('static', 'videos'), exist_ok=True)
-                video_file.save(video_path)
-                content.hero_video = video_filename
-            else:
-                flash('Invalid video file type. Only MP4, WEBM, MOV, AVI allowed.', 'danger')
-                return redirect(url_for('admin_dashboard'))
 
     db.session.commit()
     flash('Hero section updated successfully!', 'success')
