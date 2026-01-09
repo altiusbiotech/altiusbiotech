@@ -12,5 +12,5 @@ python-dotenv==1.0.0
 # Production Server
 gunicorn==21.2.0
 
-# Database Driver - PostgreSQL (included free on Railway)
-psycopg2-binary==2.9.9
+# Database Driver - PostgreSQL (compatible with Python 3.11-3.12)
+psycopg2-binary==2.9.10

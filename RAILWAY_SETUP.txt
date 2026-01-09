@@ -1,0 +1,85 @@
+===============================================
+RAILWAY DEPLOYMENT SETUP - POSTGRESQL DATABASE
+===============================================
+
+WHY YOU NEED THIS:
+- SQLite database resets on every Railway deployment
+- All your edits (content, features, products) are lost
+- Solution: Use Railway's PostgreSQL database (free & persistent)
+
+STEP-BY-STEP SETUP ON RAILWAY:
+===============================================
+
+1. ADD POSTGRESQL DATABASE TO YOUR PROJECT
+   - Go to your Railway project dashboard
+   - Click "New" → "Database" → "Add PostgreSQL"
+   - Railway will automatically provision a PostgreSQL database
+   - DATABASE_URL environment variable will be auto-created
+
+2. VERIFY ENVIRONMENT VARIABLES
+   In Railway project settings, ensure these are set:
+
+   ✓ DATABASE_URL (auto-set by Railway PostgreSQL)
+   ✓ SECRET_KEY (set your own secure key)
+   ✓ ADMIN_USERNAME (your admin username)
+   ✓ ADMIN_PASSWORD (your admin password)
+   ✓ FLASK_ENV=production
+   ✓ SESSION_COOKIE_SECURE=True
+   ✓ MAX_CONTENT_LENGTH=52428800
+
+3. DEPLOY YOUR CODE
+   - Push your code to GitHub
+   - Railway will automatically deploy
+   - Database tables will be created automatically
+   - Default admin and content will be created on first run
+
+4. VERIFY IT WORKS
+   - Visit your Railway app URL
+   - Changes you make in admin panel will now persist!
+   - Database survives deployments and restarts
+
+===============================================
+LOCAL DEVELOPMENT (Still uses SQLite):
+===============================================
+
+Your .env file uses:
+DATABASE_URL=sqlite:///cms.db
+
+This is perfect for local development. Keep it as is!
+
+===============================================
+IMPORTANT NOTES:
+===============================================
+
+✓ Railway PostgreSQL is FREE (500MB storage, 5GB bandwidth)
+✓ Data persists between deployments
+✓ Uploaded files (images) still reset - see note below
+✓ Your app.py already handles both SQLite and PostgreSQL
+
+⚠️ UPLOADED FILES STILL RESET ON RAILWAY
+- Images uploaded via admin panel are stored in static/images/
+- These are ephemeral on Railway (reset on redeploy)
+- For permanent storage, use Cloudinary (ask for setup help)
+
+===============================================
+TROUBLESHOOTING:
+===============================================
+
+If database doesn't initialize:
+1. Check Railway logs for errors
+2. Verify DATABASE_URL is set correctly
+3. Ensure psycopg2-binary is in requirements.txt (already included)
+4. Database tables auto-create on first app.run()
+
+If you see "ImportError: undefined symbol: _PyInterpreterState_Get":
+- This is a Python 3.13 compatibility issue (FIXED)
+- runtime.txt specifies Python 3.11.9
+- psycopg2-binary updated to 2.9.10
+- Redeploy to apply fix
+
+If you need to reset the database:
+1. Delete the PostgreSQL service in Railway
+2. Add a new PostgreSQL service
+3. Redeploy - fresh database with defaults
+
+===============================================

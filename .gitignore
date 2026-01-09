@@ -1,5 +1,6 @@
 # Markdown documentation files
 *.md
+!RAILWAY_SETUP.txt
 
 # Environment variables and secrets
 .env
