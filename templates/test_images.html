@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-image {
+            border: 2px solid #333;
+            margin: 10px 0;
+            max-width: 400px;
+        }
+        .test-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Cloudinary Image Diagnostic Test</h1>
+
+    <div class="test-section">
+        <h2>Test 1: Direct Cloudinary URL (Hardcoded)</h2>
+        <p>Testing if Cloudinary images load at all:</p>
+        <div class="test-image">
+            <img src="https://res.cloudinary.com/drr87gxbc/image/upload/v1768036319/altius-biotech/products/zl9w0mansvtzldwnmofb.jpg"
+                 alt="Test Image"
+                 onload="document.getElementById('test1-status').className='status success'; document.getElementById('test1-status').textContent='✅ Image loaded successfully!'"
+                 onerror="document.getElementById('test1-status').className='status error'; document.getElementById('test1-status').textContent='❌ Image failed to load'">
+        </div>
+        <div id="test1-status" class="status">⏳ Loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Database Products</h2>
+        {% for product in products %}
+        <div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+            <h3>{{ product.title }}</h3>
+
+            <p><strong>Database Image Value:</strong></p>
+            <pre>{{ product.image }}</pre>
+
+            <p><strong>Is Cloudinary URL?</strong>
+                {% if product.image and product.image.startswith('http') %}
+                    <span style="color: green;">✅ YES</span>
+                {% else %}
+                    <span style="color: red;">❌ NO (local filename)</span>
+                {% endif %}
+            </p>
+
+            {% if product.image %}
+            <p><strong>Rendered Image:</strong></p>
+            <div class="test-image">
+                {% if product.image.startswith('http') %}
+                <img src="{{ product.image }}" alt="{{ product.title }}"
+                     onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✅ Loaded!'"
+                     onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='❌ Failed!'">
+                <div class="status">⏳ Loading...</div>
+                <p><strong>Using URL:</strong> {{ product.image }}</p>
+                {% else %}
+                <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}"
+                     onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✅ Loaded!'"
+                     onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='❌ Failed!'">
+                <div class="status">⏳ Loading...</div>
+                <p><strong>Using path:</strong> /static/images/products/{{ product.image }}</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <p style="color: #999;">No image set for this product</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Browser Console</h2>
+        <p>Open browser DevTools (F12) and check the Console tab for any errors.</p>
+        <button onclick="console.log('✅ Console is working!')">Click to test console</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Network Tab</h2>
+        <ol>
+            <li>Open DevTools (F12)</li>
+            <li>Go to Network tab</li>
+            <li>Refresh this page</li>
+            <li>Look for image requests</li>
+            <li>Check their Status codes (should be 200)</li>
+        </ol>
+    </div>
+
+    <script>
+        console.log('🔍 Image Diagnostic Page Loaded');
+        console.log('Products:', {{ products | tojson | safe }});
+    </script>
+</body>
+</html>

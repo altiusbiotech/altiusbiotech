@@ -163,6 +163,13 @@ def index():
     return render_template('index.html', content=content, features=features, products=products)
 
 
+@app.route('/test-images')
+def test_images():
+    """Diagnostic page to test image loading"""
+    products = Product.query.order_by(Product.order).all()
+    return render_template('test_images.html', products=products)
+
+
 @app.route('/sitemap.xml')
 def sitemap():
     """Generate dynamic sitemap for search engines"""
