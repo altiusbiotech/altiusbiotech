@@ -11,10 +11,11 @@ from models import db, Content, Feature, Product, Admin, ContentHistory
 
 # Import Cloudinary helper (will work even if Cloudinary not configured)
 try:
-    from cloudinary_helper import upload_image, delete_file, is_cloudinary_configured
+    from cloudinary_helper import upload_image, upload_video, delete_file, is_cloudinary_configured
 except ImportError:
     # Fallback if cloudinary not installed
     def upload_image(*args, **kwargs): return None
+    def upload_video(*args, **kwargs): return None
     def delete_file(*args, **kwargs): return False
     def is_cloudinary_configured(): return False
 
@@ -67,7 +68,7 @@ def set_security_headers(response):
     response.headers['X-Frame-Options'] = 'DENY'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com; frame-src https://www.google.com;"
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; frame-src https://www.google.com;"
     return response
 
 # Context processor to inject variables into all templates
@@ -361,6 +362,53 @@ def update_hero():
         content.stat2_number = request.form.get('stat2_number')
     if request.form.get('stat2_text') is not None:
         content.stat2_text = request.form.get('stat2_text')
+
+    # Handle hero video upload
+    if 'hero_video' in request.files:
+        video_file = request.files['hero_video']
+        if video_file and video_file.filename and video_file.filename.strip():
+            # Validate video file extension
+            allowed_video_exts = {'mp4', 'webm', 'mov', 'avi', 'mkv'}
+            if '.' in video_file.filename and video_file.filename.rsplit('.', 1)[1].lower() in allowed_video_exts:
+                print(f"[DEBUG] Uploading hero video: {video_file.filename}")
+
+                # Delete old video if exists
+                if content.hero_video:
+                    if is_cloudinary_configured() and content.hero_video.startswith('http'):
+                        print(f"[DEBUG] Deleting old video from Cloudinary: {content.hero_video}")
+                        delete_file(content.hero_video)
+                    else:
+                        # Delete from local storage
+                        old_video_path = os.path.join('static', 'videos', content.hero_video)
+                        if os.path.exists(old_video_path):
+                            print(f"[DEBUG] Deleting old local video: {old_video_path}")
+                            os.remove(old_video_path)
+
+                # Upload new video
+                if is_cloudinary_configured():
+                    print("[DEBUG] Uploading to Cloudinary...")
+                    video_url = upload_video(video_file, folder='altius-biotech/videos')
+                    if not video_url:
+                        flash('Failed to upload video to cloud storage.', 'danger')
+                        return redirect(url_for('admin_dashboard'))
+                    print(f"[DEBUG] Video uploaded: {video_url}")
+                else:
+                    # Fallback to local storage
+                    print("[DEBUG] Cloudinary not configured, using local storage...")
+                    filename = secure_filename(video_file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    video_filename = f"hero_{timestamp}_{filename}"
+                    video_path = os.path.join('static', 'videos', video_filename)
+                    os.makedirs(os.path.join('static', 'videos'), exist_ok=True)
+                    video_file.save(video_path)
+                    video_url = video_filename
+                    print(f"[DEBUG] Video saved locally: {video_filename}")
+
+                content.hero_video = video_url
+                print(f"[DEBUG] Updated content.hero_video to: {content.hero_video}")
+            else:
+                flash('Invalid video file type. Only MP4, WEBM, MOV, AVI, MKV allowed.', 'danger')
+                return redirect(url_for('admin_dashboard'))
 
     db.session.commit()
     flash('Hero section updated successfully!', 'success')

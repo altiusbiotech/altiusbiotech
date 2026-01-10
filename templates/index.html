@@ -7,7 +7,11 @@
     {% if content and content.hero_video %}
     <div class="hero-video-bg">
         <video autoplay muted loop playsinline id="heroVideo">
+            {% if content.hero_video.startswith('http') %}
+            <source src="{{ content.hero_video }}" type="video/mp4">
+            {% else %}
             <source src="{{ url_for('static', filename='videos/' + content.hero_video) }}" type="video/mp4">
+            {% endif %}
         </video>
         <div class="video-overlay"></div>
     </div>

@@ -119,6 +119,27 @@
                     <textarea name="hero_description">{{ content.hero_description if content else '' }}</textarea>
                 </div>
 
+                {% if content and content.hero_video %}
+                <div class="form-group">
+                    <label>Current Background Video</label>
+                    <div>
+                        {% if content.hero_video.startswith('http') %}
+                        <video src="{{ content.hero_video }}" style="max-width: 400px; border-radius: 8px;" controls></video>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Cloudinary URL: {{ content.hero_video }}</p>
+                        {% else %}
+                        <video src="{{ url_for('static', filename='videos/' + content.hero_video) }}" style="max-width: 400px; border-radius: 8px;" controls></video>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Local file: {{ content.hero_video }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label>Upload Hero Background Video (Optional)</label>
+                    <input type="file" name="hero_video" accept="video/*">
+                    <small>Leave empty to keep current video. Allowed formats: MP4, WEBM, MOV, AVI, MKV (max 50MB)</small>
+                </div>
+
                 <div class="grid grid-2">
                     <div class="form-group">
                         <label>Stat 1 Number</label>

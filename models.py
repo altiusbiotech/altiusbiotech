@@ -11,6 +11,7 @@ class Content(db.Model):
     hero_label = db.Column(db.String(200), default='◆ Innovation Redefined')
     hero_title = db.Column(db.String(200), default='The Future of Medical Aesthetics')
     hero_description = db.Column(db.Text)
+    hero_video = db.Column(db.String(500))  # Store hero video URL (Cloudinary) or filename (local)
     stat1_number = db.Column(db.String(50), default='100%')
     stat1_text = db.Column(db.String(100), default='CE Certified Excellence')
     stat2_number = db.Column(db.String(50), default='DSE')

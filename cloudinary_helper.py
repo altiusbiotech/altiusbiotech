@@ -77,6 +77,48 @@ def upload_image(file, folder='altius-biotech'):
         return None
 
 
+def upload_video(file, folder='altius-biotech'):
+    """
+    Upload video to Cloudinary
+
+    Args:
+        file: FileStorage object from request.files
+        folder: Cloudinary folder path (e.g., 'altius-biotech/videos')
+
+    Returns:
+        str: Cloudinary secure URL if successful, None if failed
+    """
+    if not is_cloudinary_configured():
+        print("[CLOUDINARY] Video upload skipped - not configured")
+        return None
+
+    try:
+        print(f"[CLOUDINARY] Uploading video to folder: {folder}")
+
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            file,
+            folder=folder,
+            resource_type='video',
+            allowed_formats=['mp4', 'webm', 'mov', 'avi', 'mkv']
+        )
+
+        # Return the secure HTTPS URL
+        secure_url = result['secure_url']
+        print(f"[CLOUDINARY] Video upload successful!")
+        print(f"[CLOUDINARY] Public ID: {result.get('public_id')}")
+        print(f"[CLOUDINARY] Secure URL: {secure_url}")
+        print(f"[CLOUDINARY] URL length: {len(secure_url)} characters")
+
+        return secure_url
+
+    except Exception as e:
+        print(f"[CLOUDINARY] Video upload error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def delete_file(url):
     """
     Delete file from Cloudinary by URL
