@@ -79,3 +79,4 @@ node_modules/
 # User uploaded content (keep these out of git)
 static/images/products/
 static/images/features/
+static/videos/
