@@ -205,7 +205,11 @@
                 {% for feature in features %}
                 <div class="item-card">
                     {% if feature.image %}
+                        {% if feature.image.startswith('http') %}
+                    <img src="{{ feature.image }}" alt="{{ feature.title }}" class="image-preview">
+                        {% else %}
                     <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}" class="image-preview">
+                        {% endif %}
                     {% endif %}
                     <div class="item-info">
                         <strong>{{ feature.title }}</strong>
@@ -284,7 +288,11 @@
                 {% for product in products %}
                 <div class="item-card">
                     {% if product.image %}
+                        {% if product.image.startswith('http') %}
+                    <img src="{{ product.image }}" alt="{{ product.title }}" class="image-preview">
+                        {% else %}
                     <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}" class="image-preview">
+                        {% endif %}
                     {% endif %}
                     <div class="item-info">
                         <strong>{{ product.title }}</strong>

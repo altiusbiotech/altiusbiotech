@@ -14,7 +14,11 @@
             <div class="form-group">
                 <label>Current Image</label>
                 <div>
+                    {% if product.image.startswith('http') %}
+                    <img src="{{ product.image }}" alt="{{ product.title }}" style="max-width: 200px; border-radius: 8px;">
+                    {% else %}
                     <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}" style="max-width: 200px; border-radius: 8px;">
+                    {% endif %}
                 </div>
             </div>
             {% endif %}

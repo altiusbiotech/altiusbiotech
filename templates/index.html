@@ -50,7 +50,13 @@
             <div class="feature-box">
                 <div class="feature-icon">
                     {% if feature.image %}
+                        {% if feature.image.startswith('http') %}
+                    <img src="{{ feature.image }}" alt="{{ feature.title }}">
+                        {% else %}
                     <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}">
+                        {% endif %}
+                    {% else %}
+                    <div class="feature-emoji">🔬</div>
                     {% endif %}
                 </div>
                 <h3>{{ feature.title }}</h3>
@@ -75,7 +81,13 @@
             <div class="product-card">
                 <div class="product-image">
                     {% if product.image %}
+                        {% if product.image.startswith('http') %}
+                    <img src="{{ product.image }}" alt="{{ product.title }}">
+                        {% else %}
                     <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}">
+                        {% endif %}
+                    {% else %}
+                    <div class="product-icon">📦</div>
                     {% endif %}
                 </div>
                 <div class="product-info">

@@ -9,6 +9,15 @@ from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
 from models import db, Content, Feature, Product, Admin, ContentHistory
 
+# Import Cloudinary helper (will work even if Cloudinary not configured)
+try:
+    from cloudinary_helper import upload_image, delete_file, is_cloudinary_configured
+except ImportError:
+    # Fallback if cloudinary not installed
+    def upload_image(*args, **kwargs): return None
+    def delete_file(*args, **kwargs): return False
+    def is_cloudinary_configured(): return False
+
 # Load environment variables
 load_dotenv()
 
