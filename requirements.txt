@@ -14,3 +14,6 @@ gunicorn==21.2.0
 
 # Database Driver - PostgreSQL (compatible with Python 3.11-3.12)
 psycopg2-binary==2.9.10
+
+# Cloud Storage - Cloudinary for images and videos
+cloudinary==1.41.0
