@@ -57,10 +57,22 @@ class Product(db.Model):
     """Products list"""
     id = db.Column(db.Integer, primary_key=True)
     icon = db.Column(db.String(10))  # Keep for backward compatibility
-    image = db.Column(db.String(255))  # Store product image filename
+    image = db.Column(db.String(500))  # Primary/main product image
     title = db.Column(db.String(100))
     description = db.Column(db.Text)
     order = db.Column(db.Integer, default=0)
+
+    # Relationship to product images gallery
+    images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
+
+
+class ProductImage(db.Model):
+    """Product image gallery - multiple images per product"""
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    image_url = db.Column(db.String(500))  # Cloudinary URL or filename
+    order = db.Column(db.Integer, default=0)  # Display order
+    caption = db.Column(db.String(100))  # Optional: "Front View", "Side View", etc.
 
 
 class ContentHistory(db.Model):

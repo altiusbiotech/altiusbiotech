@@ -10,23 +10,60 @@
         <form method="POST" action="{{ url_for('edit_product', id=product.id) }}" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            {% if product.image %}
+            <!-- Current Product Images -->
+            {% if product.image or product.images %}
             <div class="form-group">
-                <label>Current Image</label>
-                <div>
-                    {% if product.image.startswith('http') %}
-                    <img src="{{ product.image }}" alt="{{ product.title }}" style="max-width: 200px; border-radius: 8px;">
-                    {% else %}
-                    <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}" style="max-width: 200px; border-radius: 8px;">
+                <label>Current Product Images</label>
+                <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+                    <strong>Tip:</strong> Drag and drop images to reorder them. The first image will be the main product image. Click "Save Order" when done.
+                </p>
+                <div class="gallery-grid" id="sortable-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <!-- Main Image (sortable) -->
+                    {% if product.image %}
+                    <div class="gallery-item sortable-item" data-image-id="main" data-image-url="{{ product.image }}" data-is-main="true" style="position: relative; border: 2px solid #2a7c8e; border-radius: 8px; overflow: hidden; cursor: move;">
+                        {% if product.image.startswith('http') %}
+                        <img src="{{ product.image }}" alt="{{ product.title }}" style="width: 100%; height: 150px; object-fit: cover; pointer-events: none;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}" style="width: 100%; height: 150px; object-fit: cover; pointer-events: none;">
+                        {% endif %}
+                        <div style="padding: 8px; background: #e8f4f8;">
+                            <small style="display: block; color: #2a7c8e; font-weight: bold;">Main Image (Order: <span class="order-number">0</span>)</small>
+                        </div>
+                    </div>
                     {% endif %}
+
+                    <!-- Gallery Images -->
+                    {% for img in product.images|sort(attribute='order') %}
+                    <div class="gallery-item sortable-item" data-image-id="{{ img.id }}" data-image-url="{{ img.image_url }}" data-is-main="false" style="position: relative; border: 2px solid #e0e0e0; border-radius: 8px; overflow: hidden; cursor: move;">
+                        {% if img.image_url.startswith('http') %}
+                        <img src="{{ img.image_url }}" alt="Gallery image" style="width: 100%; height: 150px; object-fit: cover; pointer-events: none;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/products/' + img.image_url) }}" alt="Gallery image" style="width: 100%; height: 150px; object-fit: cover; pointer-events: none;">
+                        {% endif %}
+                        <div style="padding: 8px; background: #f5f5f5;">
+                            <small style="display: block; margin-bottom: 5px;">Order: <span class="order-number">{{ img.order }}</span></small>
+                            <div style="display: flex; gap: 5px;">
+                                <a href="{{ url_for('delete_product_image', id=img.id) }}"
+                                   onclick="if (!confirm('Delete this image?')) return false;"
+                                   style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-block;">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
+
+                {% if product.image or product.images %}
+                <button type="button" id="save-order-btn" class="btn btn-primary" style="margin-bottom: 15px;">Save Order</button>
+                <span id="order-status" style="margin-left: 10px; color: #28a745; display: none;">✓ Order saved!</span>
+                {% endif %}
             </div>
             {% endif %}
 
+            <!-- Upload Product Images -->
             <div class="form-group">
-                <label>Upload New Image (Optional)</label>
-                <input type="file" name="product_image" accept="image/*">
-                <small>Leave empty to keep current image. Allowed: JPG, PNG, GIF, WEBP</small>
+                <label>Upload New Product Images</label>
+                <input type="file" name="product_images" accept="image/*" multiple>
+                <small>Select one or multiple images (Ctrl/Cmd + Click for multiple). First image will become the main product image, others will be added to gallery. You can reorder gallery images after upload using drag & drop. Allowed: JPG, PNG, GIF, WEBP (max 5MB each)</small>
             </div>
 
             <div class="grid grid-2">
@@ -52,4 +89,147 @@
         </form>
     </div>
 </div>
+
+<script>
+// Drag and drop functionality for gallery images
+document.addEventListener('DOMContentLoaded', function() {
+    const gallery = document.getElementById('sortable-gallery');
+    if (!gallery) return;
+
+    let draggedElement = null;
+    let draggedOverElement = null;
+
+    // Get all sortable items
+    const sortableItems = gallery.querySelectorAll('.sortable-item');
+
+    sortableItems.forEach(item => {
+        item.setAttribute('draggable', 'true');
+
+        item.addEventListener('dragstart', function(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', function(e) {
+            this.style.opacity = '1';
+            // Remove drag-over styling from all items
+            sortableItems.forEach(i => {
+                i.style.border = '2px solid #e0e0e0';
+            });
+        });
+
+        item.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            if (this !== draggedElement) {
+                this.style.border = '2px solid #2a7c8e';
+                draggedOverElement = this;
+            }
+        });
+
+        item.addEventListener('dragleave', function(e) {
+            this.style.border = '2px solid #e0e0e0';
+        });
+
+        item.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.border = '2px solid #e0e0e0';
+
+            if (draggedElement !== this) {
+                // Get all sortable items again (in current order)
+                const allItems = Array.from(gallery.querySelectorAll('.sortable-item'));
+                const draggedIndex = allItems.indexOf(draggedElement);
+                const targetIndex = allItems.indexOf(this);
+
+                if (draggedIndex < targetIndex) {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this);
+                }
+
+                // Update order numbers display
+                updateOrderNumbers();
+            }
+        });
+    });
+
+    // Update order numbers and visual styling in the UI
+    function updateOrderNumbers() {
+        const items = gallery.querySelectorAll('.sortable-item');
+        items.forEach((item, index) => {
+            const orderSpan = item.querySelector('.order-number');
+            if (orderSpan) {
+                orderSpan.textContent = index;
+            }
+
+            // First item is always the main image
+            if (index === 0) {
+                item.style.border = '2px solid #2a7c8e';
+                item.querySelector('div[style*="padding"]').style.background = '#e8f4f8';
+                const small = item.querySelector('small');
+                if (small) {
+                    small.innerHTML = '<span style="color: #2a7c8e; font-weight: bold;">Main Image (Order: <span class="order-number">0</span>)</span>';
+                }
+                item.setAttribute('data-is-main', 'true');
+            } else {
+                item.style.border = '2px solid #e0e0e0';
+                item.querySelector('div[style*="padding"]').style.background = '#f5f5f5';
+                const small = item.querySelector('small');
+                if (small && !small.querySelector('.order-number').closest('div').querySelector('a')) {
+                    small.innerHTML = 'Order: <span class="order-number">' + index + '</span>';
+                }
+                item.setAttribute('data-is-main', 'false');
+            }
+        });
+    }
+
+    // Save order button
+    const saveOrderBtn = document.getElementById('save-order-btn');
+    if (saveOrderBtn) {
+        saveOrderBtn.addEventListener('click', function() {
+            const items = gallery.querySelectorAll('.sortable-item');
+            const orderData = [];
+
+            items.forEach((item, index) => {
+                const imageId = item.getAttribute('data-image-id');
+                const imageUrl = item.getAttribute('data-image-url');
+                orderData.push({
+                    id: imageId,
+                    image_url: imageUrl,
+                    order: index,
+                    is_main: index === 0
+                });
+            });
+
+            // Send AJAX request to save order
+            fetch('{{ url_for("reorder_product_images", id=product.id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify({ images: orderData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const statusSpan = document.getElementById('order-status');
+                    statusSpan.style.display = 'inline';
+                    setTimeout(() => {
+                        statusSpan.style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('Error saving order: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving order. Please try again.');
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

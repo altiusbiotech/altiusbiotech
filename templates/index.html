@@ -83,21 +83,49 @@
         <div class="products-grid">
             {% for product in products %}
             <div class="product-card">
-                <div class="product-image">
+                <div class="product-image-gallery">
+                    {% set all_images = [] %}
                     {% if product.image %}
                         {% if product.image.startswith('http') %}
-                    <img src="{{ product.image }}" alt="{{ product.title }}">
+                            {% set _ = all_images.append(product.image) %}
                         {% else %}
-                    <img src="{{ url_for('static', filename='images/products/' + product.image) }}" alt="{{ product.title }}">
+                            {% set _ = all_images.append(url_for('static', filename='images/products/' + product.image)) %}
                         {% endif %}
+                    {% endif %}
+                    {% for img in product.images|sort(attribute='order') %}
+                        {% if img.image_url.startswith('http') %}
+                            {% set _ = all_images.append(img.image_url) %}
+                        {% else %}
+                            {% set _ = all_images.append(url_for('static', filename='images/products/' + img.image_url)) %}
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if all_images|length > 0 %}
+                    <div class="product-carousel">
+                        {% for img_url in all_images %}
+                        <div class="carousel-item {% if loop.first %}active{% endif %}">
+                            <img src="{{ img_url }}" alt="{{ product.title }}">
+                        </div>
+                        {% endfor %}
+
+                        {% if all_images|length > 1 %}
+                        <button class="carousel-prev" aria-label="Previous image">‹</button>
+                        <button class="carousel-next" aria-label="Next image">›</button>
+                        <div class="carousel-indicators">
+                            {% for img_url in all_images %}
+                            <span class="indicator {% if loop.first %}active{% endif %}"></span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                     {% else %}
                     <div class="product-icon">📦</div>
                     {% endif %}
                 </div>
                 <div class="product-info">
                     <h3>{{ product.title }}</h3>
-                    <p>{{ product.description }}</p>
-                    <a href="#contact" class="product-link">Learn More →</a>
+                    <p class="product-description">{{ product.description }}</p>
+                    <button class="product-link learn-more-btn">Learn More →</button>
                 </div>
             </div>
             {% endfor %}

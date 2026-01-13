@@ -1,13 +1,13 @@
 import os
 import json
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, jsonify
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
-from models import db, Content, Feature, Product, Admin, ContentHistory
+from models import db, Content, Feature, Product, ProductImage, Admin, ContentHistory
 
 # Import Cloudinary helper (will work even if Cloudinary not configured)
 try:
@@ -625,24 +625,55 @@ def add_product():
     if 'admin' not in session:
         return redirect(url_for('admin_login'))
 
-    # Handle product image upload
+    # Handle product images upload (single or multiple)
     image_filename = None
-    if 'product_image' in request.files:
-        image_file = request.files['product_image']
-        if image_file and image_file.filename:
-            if allowed_file(image_file.filename):
-                # Generate unique filename
-                filename = secure_filename(image_file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                image_filename = f"product_{timestamp}_{filename}"
-                image_path = os.path.join('static', 'images', 'products', image_filename)
+    gallery_images = []
 
-                # Create products directory if it doesn't exist
-                os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
-                image_file.save(image_path)
+    if 'product_images' in request.files:
+        uploaded_files = request.files.getlist('product_images')
+        # Filter out empty files
+        valid_files = [f for f in uploaded_files if f and f.filename and f.filename.strip() != '']
+
+        if valid_files:
+            # First image becomes the main product image
+            first_image = valid_files[0]
+
+            if allowed_file(first_image.filename):
+                # Upload first image as main image (Cloudinary or local)
+                if is_cloudinary_configured():
+                    image_url = upload_image(first_image, folder='altius-biotech/products')
+                    if not image_url:
+                        flash('Failed to upload main image to cloud storage.', 'danger')
+                        return redirect(url_for('admin_dashboard'))
+                    image_filename = image_url
+                else:
+                    filename = secure_filename(first_image.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    image_filename = f"product_{timestamp}_{filename}"
+                    image_path = os.path.join('static', 'images', 'products', image_filename)
+                    os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
+                    first_image.save(image_path)
             else:
                 flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
                 return redirect(url_for('admin_dashboard'))
+
+            # Remaining images go to gallery
+            if len(valid_files) > 1:
+                for idx, gallery_file in enumerate(valid_files[1:], start=1):
+                    if allowed_file(gallery_file.filename):
+                        # Upload to Cloudinary or save locally
+                        if is_cloudinary_configured():
+                            image_url = upload_image(gallery_file, folder='altius-biotech/products')
+                            if image_url:
+                                gallery_images.append((image_url, idx))
+                        else:
+                            filename = secure_filename(gallery_file.filename)
+                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                            gallery_filename = f"product_gallery_{timestamp}_{idx}_{filename}"
+                            image_path = os.path.join('static', 'images', 'products', gallery_filename)
+                            os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
+                            gallery_file.save(image_path)
+                            gallery_images.append((gallery_filename, idx))
 
     product = Product(
         icon=None,  # No longer using emoji icons
@@ -652,6 +683,17 @@ def add_product():
         order=request.form.get('order', 0)
     )
     db.session.add(product)
+    db.session.commit()
+
+    # Add gallery images to ProductImage table
+    for image_url, order in gallery_images:
+        product_image = ProductImage(
+            product_id=product.id,
+            image_url=image_url,
+            order=order
+        )
+        db.session.add(product_image)
+
     db.session.commit()
     flash('Product added successfully!', 'success')
 
@@ -670,28 +712,72 @@ def edit_product(id):
         product.description = request.form.get('description')
         product.order = request.form.get('order', 0)
 
-        # Handle product image upload
-        if 'product_image' in request.files:
-            image_file = request.files['product_image']
-            if image_file and image_file.filename:
-                if allowed_file(image_file.filename):
-                    # Delete old image if exists
-                    if product.image:
-                        old_image_path = os.path.join('static', 'images', 'products', product.image)
-                        if os.path.exists(old_image_path):
-                            os.remove(old_image_path)
+        # Handle product images upload (single or multiple)
+        if 'product_images' in request.files:
+            uploaded_files = request.files.getlist('product_images')
+            # Filter out empty files
+            valid_files = [f for f in uploaded_files if f and f.filename and f.filename.strip() != '']
 
-                    # Save new image
-                    filename = secure_filename(image_file.filename)
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    image_filename = f"product_{timestamp}_{filename}"
-                    image_path = os.path.join('static', 'images', 'products', image_filename)
-                    os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
-                    image_file.save(image_path)
-                    product.image = image_filename
+            if valid_files:
+                # First image becomes the main product image
+                first_image = valid_files[0]
+
+                if allowed_file(first_image.filename):
+                    # Delete old main image if exists
+                    if product.image:
+                        if is_cloudinary_configured() and product.image.startswith('http'):
+                            delete_file(product.image)
+                        else:
+                            old_image_path = os.path.join('static', 'images', 'products', product.image)
+                            if os.path.exists(old_image_path):
+                                os.remove(old_image_path)
+
+                    # Upload first image as main image
+                    if is_cloudinary_configured():
+                        image_url = upload_image(first_image, folder='altius-biotech/products')
+                        if not image_url:
+                            flash('Failed to upload main image to cloud storage.', 'danger')
+                            return redirect(url_for('edit_product', id=id))
+                        product.image = image_url
+                    else:
+                        filename = secure_filename(first_image.filename)
+                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        image_filename = f"product_{timestamp}_{filename}"
+                        image_path = os.path.join('static', 'images', 'products', image_filename)
+                        os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
+                        first_image.save(image_path)
+                        product.image = image_filename
                 else:
                     flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
                     return redirect(url_for('edit_product', id=id))
+
+                # Remaining images go to gallery
+                if len(valid_files) > 1:
+                    max_order = db.session.query(db.func.max(ProductImage.order)).filter_by(product_id=product.id).scalar() or 0
+
+                    for idx, gallery_file in enumerate(valid_files[1:], start=1):
+                        if allowed_file(gallery_file.filename):
+                            # Upload to Cloudinary or save locally
+                            if is_cloudinary_configured():
+                                image_url = upload_image(gallery_file, folder='altius-biotech/products')
+                                if not image_url:
+                                    continue  # Skip this file if upload fails
+                            else:
+                                filename = secure_filename(gallery_file.filename)
+                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                image_filename = f"product_gallery_{timestamp}_{idx}_{filename}"
+                                image_path = os.path.join('static', 'images', 'products', image_filename)
+                                os.makedirs(os.path.join('static', 'images', 'products'), exist_ok=True)
+                                gallery_file.save(image_path)
+                                image_url = image_filename
+
+                            # Create ProductImage entry
+                            product_image = ProductImage(
+                                product_id=product.id,
+                                image_url=image_url,
+                                order=max_order + idx
+                            )
+                            db.session.add(product_image)
 
         db.session.commit()
         flash('Product updated successfully!', 'success')
@@ -707,16 +793,127 @@ def delete_product(id):
 
     product = Product.query.get(id)
     if product:
-        # Delete image file if exists
+        # Delete main image file if exists
         if product.image:
-            image_path = os.path.join('static', 'images', 'products', product.image)
-            if os.path.exists(image_path):
-                os.remove(image_path)
+            if is_cloudinary_configured() and product.image.startswith('http'):
+                delete_file(product.image)
+            else:
+                image_path = os.path.join('static', 'images', 'products', product.image)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+        # Delete gallery images (cascade will handle DB deletion)
+        for img in product.images:
+            if is_cloudinary_configured() and img.image_url.startswith('http'):
+                delete_file(img.image_url)
+            else:
+                image_path = os.path.join('static', 'images', 'products', img.image_url)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
         db.session.delete(product)
         db.session.commit()
         flash('Product deleted successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/product/image/delete/<int:id>', methods=['GET', 'POST'])
+def delete_product_image(id):
+    """Delete a single gallery image"""
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    image = ProductImage.query.get_or_404(id)
+    product_id = image.product_id
+
+    # Delete file
+    if is_cloudinary_configured() and image.image_url.startswith('http'):
+        delete_file(image.image_url)
+    else:
+        image_path = os.path.join('static', 'images', 'products', image.image_url)
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    db.session.delete(image)
+    db.session.commit()
+    flash('Gallery image deleted successfully!', 'success')
+
+    return redirect(url_for('edit_product', id=product_id))
+
+
+@app.route('/admin/product/<int:id>/reorder-images', methods=['POST'])
+def reorder_product_images(id):
+    """Reorder product gallery images and update main image"""
+    if 'admin' not in session:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+
+    product = Product.query.get_or_404(id)
+    data = request.get_json()
+
+    if not data or 'images' not in data:
+        return jsonify({'success': False, 'error': 'Invalid data'}), 400
+
+    try:
+        images_list = data['images']
+
+        # First image becomes the main product image
+        if images_list and len(images_list) > 0:
+            first_image = images_list[0]
+
+            # Check if the first image is currently the main image
+            if first_image['id'] == 'main':
+                # Main image stays as main, just update gallery order
+                for idx, image_data in enumerate(images_list[1:], start=1):
+                    image_id = image_data['id']
+                    if image_id != 'main':
+                        image = ProductImage.query.get(image_id)
+                        if image and image.product_id == product.id:
+                            image.order = idx
+            else:
+                # A gallery image is now first, so it becomes the new main image
+                new_main_image_id = first_image['id']
+                new_main_image = ProductImage.query.get(new_main_image_id)
+
+                if new_main_image and new_main_image.product_id == product.id:
+                    # Save old main image URL
+                    old_main_url = product.image
+
+                    # Set new main image
+                    product.image = new_main_image.image_url
+
+                    # Delete the new main image from ProductImage table
+                    db.session.delete(new_main_image)
+
+                    # Add old main image to ProductImage table if it exists
+                    if old_main_url:
+                        # Find the order for old main image
+                        old_main_order = 1
+                        for idx, img_data in enumerate(images_list):
+                            if img_data['id'] == 'main':
+                                old_main_order = idx
+                                break
+
+                        old_main_product_image = ProductImage(
+                            product_id=product.id,
+                            image_url=old_main_url,
+                            order=old_main_order
+                        )
+                        db.session.add(old_main_product_image)
+
+                    # Update order for remaining gallery images
+                    for idx, image_data in enumerate(images_list[1:], start=1):
+                        image_id = image_data['id']
+                        if image_id != 'main' and image_id != new_main_image_id:
+                            image = ProductImage.query.get(image_id)
+                            if image and image.product_id == product.id:
+                                image.order = idx
+
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/admin/history')
