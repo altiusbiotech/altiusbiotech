@@ -898,16 +898,6 @@ footer {
     }
     .nav-links.active { right: 0; }
 
-    /* Optimize video background for mobile */
-    .hero-video-bg video {
-        opacity: 0.3; /* Make video more subtle on mobile */
-    }
-
-    .video-overlay {
-        background: linear-gradient(135deg, rgba(30, 58, 95, 0.7) 0%, rgba(42, 124, 142, 0.9) 100%);
-        /* Darker overlay for better text readability on mobile */
-    }
-
     .hero {
         padding: 4rem 1.5rem;
         min-height: 500px; /* Slightly reduced height for mobile */
