@@ -415,6 +415,43 @@ def update_hero():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/admin/delete/hero-video', methods=['GET', 'POST'])
+def delete_hero_video():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    content = Content.query.first()
+    if not content or not content.hero_video:
+        flash('No hero video to delete.', 'warning')
+        return redirect(url_for('admin_dashboard'))
+
+    create_content_snapshot(content, "Before deleting hero video")
+
+    # Delete the video file
+    if content.hero_video.startswith('http'):
+        # Delete from Cloudinary
+        if is_cloudinary_configured():
+            print(f"[DEBUG] Deleting hero video from Cloudinary: {content.hero_video}")
+            if delete_file(content.hero_video):
+                print("[DEBUG] Video deleted from Cloudinary successfully")
+            else:
+                print("[DEBUG] Failed to delete video from Cloudinary")
+    else:
+        # Delete from local storage
+        video_path = os.path.join('static', 'videos', content.hero_video)
+        if os.path.exists(video_path):
+            print(f"[DEBUG] Deleting local video: {video_path}")
+            os.remove(video_path)
+            print("[DEBUG] Local video deleted successfully")
+
+    # Clear the hero_video field
+    content.hero_video = None
+    db.session.commit()
+
+    flash('Hero background video deleted successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
 @app.route('/admin/update/features', methods=['POST'])
 def update_features():
     if 'admin' not in session:

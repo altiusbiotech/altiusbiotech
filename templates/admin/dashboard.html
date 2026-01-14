@@ -142,6 +142,14 @@
                         <video src="{{ url_for('static', filename='videos/' + content.hero_video) }}" style="max-width: 400px; border-radius: 8px;" controls></video>
                         <p style="font-size: 12px; color: #666; margin-top: 5px;">Local file: {{ content.hero_video }}</p>
                         {% endif %}
+                        <div style="margin-top: 10px;">
+                            <a href="{{ url_for('delete_hero_video') }}"
+                               class="btn btn-danger"
+                               onclick="return confirm('Are you sure you want to delete the hero background video? This action cannot be undone.');"
+                               style="font-size: 14px;">
+                                Delete Video
+                            </a>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -152,7 +160,17 @@
                     <small>Leave empty to keep current video. Allowed formats: MP4, WEBM, MOV, AVI, MKV (max 50MB)</small>
                 </div>
 
-                <div class="grid grid-2">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="submit" id="hero-submit-btn" class="btn btn-success">Update Hero Section</button>
+                    <div id="hero-upload-loader" style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="spinner"></div>
+                            <span style="color: #2a7c8e; font-weight: 500;">Uploading video, please wait...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2" style="margin-top: 20px;">
                     <div class="form-group">
                         <label>Stat 1 Number</label>
                         <input type="text" name="stat1_number" value="{{ content.stat1_number if content else '' }}">
@@ -170,7 +188,6 @@
                         <input type="text" name="stat2_text" value="{{ content.stat2_text if content else '' }}">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Save Hero Section</button>
             </form>
         </div>
     </div>
@@ -443,6 +460,25 @@
             document.getElementById(tabId).classList.add('active');
         });
     });
+
+    // Hero section form - Show loading spinner on submit
+    const heroForm = document.querySelector('form[action="{{ url_for("update_hero") }}"]');
+    const heroSubmitBtn = document.getElementById('hero-submit-btn');
+    const heroUploadLoader = document.getElementById('hero-upload-loader');
+
+    if (heroForm && heroSubmitBtn && heroUploadLoader) {
+        heroForm.addEventListener('submit', function(e) {
+            // Check if there is a video file selected
+            const videoInput = document.querySelector('input[name="hero_video"]');
+            if (videoInput && videoInput.files.length > 0) {
+                // Show loading spinner
+                heroUploadLoader.style.display = 'block';
+                heroSubmitBtn.disabled = true;
+                heroSubmitBtn.style.opacity = '0.6';
+                heroSubmitBtn.textContent = 'Uploading...';
+            }
+        });
+    }
 
     // Add Product form - Show loading spinner on submit
     const addProductForm = document.querySelector('form[action="{{ url_for("add_product") }}"]');
