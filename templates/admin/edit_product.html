@@ -82,13 +82,35 @@
                 <textarea name="description" rows="4" required>{{ product.description }}</textarea>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button type="submit" class="btn btn-success">Update Product</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="submit" id="submit-btn" class="btn btn-success">Update Product</button>
                 <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+                <div id="upload-loader" style="display: none; margin-left: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="spinner"></div>
+                        <span style="color: #2a7c8e; font-weight: 500;">Uploading images, please wait...</span>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+<style>
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2a7c8e;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
 
 <script>
 // Drag and drop functionality for gallery images
@@ -228,6 +250,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 alert('Error saving order. Please try again.');
             });
+        });
+    }
+
+    // Show loading spinner when form is submitted
+    const form = document.querySelector('form[enctype="multipart/form-data"]');
+    const submitBtn = document.getElementById('submit-btn');
+    const uploadLoader = document.getElementById('upload-loader');
+
+    if (form && submitBtn && uploadLoader) {
+        form.addEventListener('submit', function(e) {
+            // Check if there are files selected
+            const fileInput = document.querySelector('input[name="product_images"]');
+            if (fileInput && fileInput.files.length > 0) {
+                // Show loading spinner
+                uploadLoader.style.display = 'block';
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+                submitBtn.textContent = 'Uploading...';
+            }
         });
     }
 });

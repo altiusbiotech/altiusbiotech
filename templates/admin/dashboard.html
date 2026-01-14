@@ -63,6 +63,18 @@
     .item-info { flex: 1; }
     .item-info strong { display: block; margin-bottom: 0.25rem; color: #1e3a5f; }
     .item-info span { color: #6c757d; font-size: 0.9rem; }
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #2a7c8e;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 
 <!-- Stats Overview -->
@@ -297,7 +309,15 @@
                     <label>Description</label>
                     <textarea name="description" placeholder="Product description..." required></textarea>
                 </div>
-                <button type="submit" class="btn btn-success">Add Product</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="submit" id="add-product-btn" class="btn btn-success">Add Product</button>
+                    <div id="add-product-loader" style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="spinner"></div>
+                            <span style="color: #2a7c8e; font-weight: 500;">Uploading images, please wait...</span>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -423,5 +443,24 @@
             document.getElementById(tabId).classList.add('active');
         });
     });
+
+    // Add Product form - Show loading spinner on submit
+    const addProductForm = document.querySelector('form[action="{{ url_for("add_product") }}"]');
+    const addProductBtn = document.getElementById('add-product-btn');
+    const addProductLoader = document.getElementById('add-product-loader');
+
+    if (addProductForm && addProductBtn && addProductLoader) {
+        addProductForm.addEventListener('submit', function(e) {
+            // Check if there are files selected
+            const fileInput = document.querySelector('input[name="product_images"]');
+            if (fileInput && fileInput.files.length > 0) {
+                // Show loading spinner
+                addProductLoader.style.display = 'block';
+                addProductBtn.disabled = true;
+                addProductBtn.style.opacity = '0.6';
+                addProductBtn.textContent = 'Uploading...';
+            }
+        });
+    }
 </script>
 {% endblock %}
