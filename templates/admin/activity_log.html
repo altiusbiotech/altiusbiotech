@@ -93,8 +93,8 @@
                         {% endif %}
                     </td>
                     <td>
-                        {{ activity.created_at.strftime('%B %d, %Y') }}<br>
-                        <small style="color: #6c757d;">{{ activity.created_at.strftime('%I:%M %p') }}</small>
+                        {{ (activity.created_at|myanmar_time).strftime('%B %d, %Y') }}<br>
+                        <small style="color: #6c757d;">{{ (activity.created_at|myanmar_time).strftime('%I:%M %p') }} (MMT)</small>
                     </td>
                 </tr>
                 {% endfor %}

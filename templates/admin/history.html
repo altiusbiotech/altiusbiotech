@@ -87,7 +87,7 @@
                     <div>
                         <div class="history-title">{{ entry.description }}</div>
                         <div class="history-date">
-                            {{ entry.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            {{ (entry.created_at|myanmar_time).strftime('%B %d, %Y at %I:%M %p') }} (MMT)
                             {% if entry.created_by %}
                             <span style="margin-left: 10px; padding: 2px 8px; background: #e3f2fd; color: #1565c0; border-radius: 4px; font-size: 0.8rem;">
                                 by {{ entry.created_by }}

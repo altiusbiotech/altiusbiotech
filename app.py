@@ -80,6 +80,17 @@ def inject_globals():
         'master_admin_username': os.environ.get('ADMIN_USERNAME', 'admin')
     }
 
+
+# Custom Jinja2 filter for Myanmar time (UTC+6:30)
+@app.template_filter('myanmar_time')
+def myanmar_time_filter(utc_dt):
+    """Convert UTC datetime to Myanmar time (UTC+6:30)"""
+    if utc_dt is None:
+        return ''
+    myanmar_offset = timedelta(hours=6, minutes=30)
+    myanmar_dt = utc_dt + myanmar_offset
+    return myanmar_dt
+
 # Initialize database
 with app.app_context():
     db.create_all()
