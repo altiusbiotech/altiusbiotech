@@ -76,7 +76,8 @@ def set_security_headers(response):
 def inject_globals():
     return {
         'current_year': datetime.now().year,
-        'content': Content.query.first()
+        'content': Content.query.first(),
+        'master_admin_username': os.environ.get('ADMIN_USERNAME', 'admin')
     }
 
 # Initialize database
@@ -276,6 +277,136 @@ def do_login():
 def admin_logout():
     session.pop('admin', None)
     return redirect(url_for('admin_login'))
+
+
+@app.route('/admin/change-password', methods=['GET', 'POST'])
+def change_password():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        admin = Admin.query.filter_by(username=session.get('username')).first()
+
+        if not admin or not check_password_hash(admin.password, current_password):
+            flash('Current password is incorrect.', 'danger')
+            return redirect(url_for('change_password'))
+
+        if new_password != confirm_password:
+            flash('New passwords do not match.', 'danger')
+            return redirect(url_for('change_password'))
+
+        if len(new_password) < 8:
+            flash('New password must be at least 8 characters long.', 'danger')
+            return redirect(url_for('change_password'))
+
+        # Update password
+        admin.password = generate_password_hash(new_password)
+        db.session.commit()
+
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('admin_dashboard'))
+
+    return render_template('admin/change_password.html')
+
+
+@app.route('/admin/manage-admins')
+def manage_admins():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    # Only master admin can manage other admins
+    master_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    if session.get('username') != master_username:
+        flash('Only the master admin can manage admin accounts.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    admins = Admin.query.all()
+    return render_template('admin/manage_admins.html', admins=admins, master_username=master_username)
+
+
+@app.route('/admin/add-admin', methods=['POST'])
+def add_admin():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    # Only master admin can add admins
+    master_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    if session.get('username') != master_username:
+        flash('Only the master admin can add admin accounts.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    username = request.form.get('username')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+
+    # Validation
+    if not username or not password:
+        flash('Username and password are required.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    if len(username) < 3:
+        flash('Username must be at least 3 characters.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    if len(password) < 8:
+        flash('Password must be at least 8 characters.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    if password != confirm_password:
+        flash('Passwords do not match.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    # Check if username already exists
+    existing = Admin.query.filter_by(username=username).first()
+    if existing:
+        flash('Username already exists.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    # Create new admin
+    new_admin = Admin(
+        username=username,
+        password=generate_password_hash(password)
+    )
+    db.session.add(new_admin)
+    db.session.commit()
+
+    flash(f'Admin account "{username}" created successfully!', 'success')
+    return redirect(url_for('manage_admins'))
+
+
+@app.route('/admin/delete-admin/<int:id>')
+def delete_admin(id):
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    # Only master admin can delete admins
+    master_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    if session.get('username') != master_username:
+        flash('Only the master admin can delete admin accounts.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    admin = Admin.query.get_or_404(id)
+
+    # Cannot delete master admin
+    if admin.username == master_username:
+        flash('Cannot delete the master admin account.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    # Cannot delete yourself
+    if admin.username == session.get('username'):
+        flash('Cannot delete your own account.', 'danger')
+        return redirect(url_for('manage_admins'))
+
+    username = admin.username
+    db.session.delete(admin)
+    db.session.commit()
+
+    flash(f'Admin account "{username}" deleted successfully!', 'success')
+    return redirect(url_for('manage_admins'))
 
 
 @app.route('/admin/dashboard')

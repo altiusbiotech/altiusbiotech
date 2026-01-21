@@ -1,0 +1,142 @@
+{% extends 'admin/base.html' %}
+{% block page_title %}Manage Admins{% endblock %}
+{% block page_heading %}Manage Admin Accounts{% endblock %}
+{% block page_description %}Create and manage admin accounts for your team{% endblock %}
+{% block content %}
+<style>
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    .admin-table th,
+    .admin-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .admin-table th {
+        background: #f5f7fa;
+        font-weight: 600;
+        color: #1e3a5f;
+    }
+    .admin-table tr:hover {
+        background: #f9f9f9;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .badge-master {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2a7c8e 100%);
+        color: white;
+    }
+    .badge-regular {
+        background: #e0e0e0;
+        color: #555;
+    }
+</style>
+
+<div class="grid" style="gap: 2rem;">
+    <!-- Add New Admin -->
+    <div class="card">
+        <div class="card-header"><h3>Add New Admin Account</h3></div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_admin') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required minlength="3"
+                           placeholder="Enter username (min 3 characters)"
+                           style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                </div>
+
+                <div class="grid grid-2" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" required minlength="8"
+                               placeholder="Enter password (min 8 characters)"
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" name="confirm_password" required minlength="8"
+                               placeholder="Confirm password"
+                               style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">Create Admin Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Existing Admins -->
+    <div class="card">
+        <div class="card-header"><h3>Existing Admin Accounts</h3></div>
+        <div class="card-body">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in admins %}
+                    <tr>
+                        <td>
+                            <strong>{{ admin.username }}</strong>
+                            {% if admin.username == session.get('username') %}
+                            <span style="color: #2a7c8e; font-size: 12px;">(You)</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if admin.username == master_username %}
+                            <span class="badge badge-master">Master Admin</span>
+                            {% else %}
+                            <span class="badge badge-regular">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if admin.username == master_username %}
+                            <span style="color: #999; font-size: 14px;">Protected account</span>
+                            {% else %}
+                            <a href="{{ url_for('delete_admin', id=admin.id) }}"
+                               class="btn btn-danger"
+                               onclick="return confirm('Are you sure you want to delete admin account &quot;{{ admin.username }}&quot;? This cannot be undone.');"
+                               style="font-size: 14px;">
+                                Delete
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if admins|length == 0 %}
+            <p style="text-align: center; color: #999; padding: 2rem;">No admin accounts found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div style="padding: 20px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+        <strong>About Admin Accounts:</strong>
+        <ul style="margin: 10px 0 0 20px; color: #1565c0;">
+            <li><strong>Master Admin</strong> - Set via environment variables, cannot be deleted</li>
+            <li><strong>Regular Admin</strong> - Created here, can be deleted anytime</li>
+            <li>All admins can edit website content</li>
+            <li>Only Master Admin can manage other admin accounts</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
