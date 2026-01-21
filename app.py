@@ -461,9 +461,13 @@ def create_content_snapshot(content, description="Manual backup"):
         'footer_text': content.footer_text,
     }
 
+    # Get the username of who made the change
+    edited_by = session.get('username', 'system')
+
     history = ContentHistory(
         content_snapshot=json.dumps(snapshot),
-        description=description
+        description=description,
+        created_by=edited_by
     )
     db.session.add(history)
     db.session.commit()
