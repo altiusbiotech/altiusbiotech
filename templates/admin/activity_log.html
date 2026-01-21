@@ -1,0 +1,128 @@
+{% extends 'admin/base.html' %}
+{% block page_title %}Activity Log{% endblock %}
+{% block page_heading %}Activity Log{% endblock %}
+{% block page_description %}Track all admin actions and changes{% endblock %}
+{% block content %}
+<style>
+    .activity-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    .activity-table th,
+    .activity-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    .activity-table th {
+        background: #f5f7fa;
+        font-weight: 600;
+        color: #1e3a5f;
+    }
+    .activity-table tr:hover {
+        background: #f9f9f9;
+    }
+    .action-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .action-create { background: #d4edda; color: #155724; }
+    .action-update { background: #fff3cd; color: #856404; }
+    .action-delete { background: #f8d7da; color: #721c24; }
+    .action-login { background: #cce5ff; color: #004085; }
+    .action-logout { background: #e2e3e5; color: #383d41; }
+    .action-rollback { background: #d1ecf1; color: #0c5460; }
+    .target-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        background: #e9ecef;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        color: #495057;
+    }
+    .no-activities {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Recent Admin Activities</h3>
+    </div>
+    <div class="card-body">
+        {% if activities %}
+        <p style="margin-bottom: 1.5rem; color: #6c757d;">
+            Showing the last 50 admin activities. All actions are logged automatically.
+        </p>
+
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th>Admin</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Details</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                <tr>
+                    <td>
+                        <strong>{{ activity.admin_username }}</strong>
+                    </td>
+                    <td>
+                        <span class="action-badge action-{{ activity.action }}">
+                            {{ activity.action }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="target-badge">{{ activity.target_type }}</span>
+                    </td>
+                    <td>
+                        {{ activity.target_name or '-' }}
+                        {% if activity.details %}
+                        <br><small style="color: #6c757d;">{{ activity.details }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ activity.created_at.strftime('%B %d, %Y') }}<br>
+                        <small style="color: #6c757d;">{{ activity.created_at.strftime('%I:%M %p') }}</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-activities">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📋</div>
+            <h3>No Activity Yet</h3>
+            <p>Activity logs will appear here when admins perform actions.</p>
+            <p style="margin-top: 1rem;">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Legend -->
+<div style="margin-top: 1.5rem; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+    <strong>Action Legend:</strong>
+    <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 15px;">
+        <span><span class="action-badge action-login">login</span> Admin logged in</span>
+        <span><span class="action-badge action-logout">logout</span> Admin logged out</span>
+        <span><span class="action-badge action-create">create</span> New item created</span>
+        <span><span class="action-badge action-update">update</span> Item modified</span>
+        <span><span class="action-badge action-delete">delete</span> Item removed</span>
+        <span><span class="action-badge action-rollback">rollback</span> Content restored</span>
+    </div>
+</div>
+{% endblock %}

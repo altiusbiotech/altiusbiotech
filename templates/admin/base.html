@@ -194,6 +194,7 @@
         <nav class="admin-nav">
             <a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">Dashboard</a>
             <a href="{{ url_for('admin_history') }}" class="{% if request.endpoint == 'admin_history' %}active{% endif %}">History</a>
+            <a href="{{ url_for('activity_log') }}" class="{% if request.endpoint == 'activity_log' %}active{% endif %}">Activity Log</a>
             <a href="{{ url_for('change_password') }}" class="{% if request.endpoint == 'change_password' %}active{% endif %}">Change Password</a>
             {% if session.get('username') == master_admin_username %}
             <a href="{{ url_for('manage_admins') }}" class="{% if request.endpoint == 'manage_admins' %}active{% endif %}">Manage Admins</a>

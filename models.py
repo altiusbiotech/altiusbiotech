@@ -89,3 +89,14 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(255))  # Stores hashed password (pbkdf2:sha256)
+
+
+class ActivityLog(db.Model):
+    """Activity log to track all admin actions"""
+    id = db.Column(db.Integer, primary_key=True)
+    admin_username = db.Column(db.String(50))
+    action = db.Column(db.String(50))  # e.g., 'create', 'update', 'delete'
+    target_type = db.Column(db.String(50))  # e.g., 'product', 'feature', 'hero', 'admin'
+    target_name = db.Column(db.String(200))  # e.g., 'Laser Device X'
+    details = db.Column(db.Text)  # Additional details if needed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

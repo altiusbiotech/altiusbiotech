@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
-from models import db, Content, Feature, Product, ProductImage, Admin, ContentHistory
+from models import db, Content, Feature, Product, ProductImage, Admin, ContentHistory, ActivityLog
 
 # Import Cloudinary helper (will work even if Cloudinary not configured)
 try:
@@ -266,6 +266,7 @@ def do_login():
         session.permanent = True
         session['admin'] = True
         session['username'] = username
+        log_activity('login', 'admin', username)
         flash('Login successful!', 'success')
         return redirect(url_for('admin_dashboard'))
 
@@ -275,7 +276,9 @@ def do_login():
 
 @app.route('/admin/logout')
 def admin_logout():
+    log_activity('logout', 'admin', session.get('username', ''))
     session.pop('admin', None)
+    session.pop('username', None)
     return redirect(url_for('admin_login'))
 
 
@@ -307,6 +310,7 @@ def change_password():
         admin.password = generate_password_hash(new_password)
         db.session.commit()
 
+        log_activity('update', 'password', session.get('username', ''))
         flash('Password changed successfully!', 'success')
         return redirect(url_for('admin_dashboard'))
 
@@ -374,6 +378,7 @@ def add_admin():
     db.session.add(new_admin)
     db.session.commit()
 
+    log_activity('create', 'admin', username)
     flash(f'Admin account "{username}" created successfully!', 'success')
     return redirect(url_for('manage_admins'))
 
@@ -405,6 +410,7 @@ def delete_admin(id):
     db.session.delete(admin)
     db.session.commit()
 
+    log_activity('delete', 'admin', username)
     flash(f'Admin account "{username}" deleted successfully!', 'success')
     return redirect(url_for('manage_admins'))
 
@@ -432,6 +438,20 @@ def admin_dashboard():
                          products_count=products_count,
                          unread_messages=unread_messages,
                          recent_messages=recent_messages)
+
+
+def log_activity(action, target_type, target_name="", details=""):
+    """Log an admin activity"""
+    admin_username = session.get('username', 'system')
+    activity = ActivityLog(
+        admin_username=admin_username,
+        action=action,
+        target_type=target_type,
+        target_name=target_name,
+        details=details
+    )
+    db.session.add(activity)
+    db.session.commit()
 
 
 def create_content_snapshot(content, description="Manual backup"):
@@ -546,6 +566,7 @@ def update_hero():
                 return redirect(url_for('admin_dashboard'))
 
     db.session.commit()
+    log_activity('update', 'hero_section', 'Hero Section')
     flash('Hero section updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -583,6 +604,7 @@ def delete_hero_video():
     content.hero_video = None
     db.session.commit()
 
+    log_activity('delete', 'hero_video', 'Hero Background Video')
     flash('Hero background video deleted successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -604,6 +626,7 @@ def update_features():
         content.features_description = request.form.get('features_description')
 
     db.session.commit()
+    log_activity('update', 'features_section', 'Features Section')
     flash('Features section updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -625,6 +648,7 @@ def update_products():
         content.products_description = request.form.get('products_description')
 
     db.session.commit()
+    log_activity('update', 'products_section', 'Products Section')
     flash('Products section updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -652,6 +676,7 @@ def update_contact():
         content.contact_address = request.form.get('contact_address')
 
     db.session.commit()
+    log_activity('update', 'contact_section', 'Contact Section')
     flash('Contact section updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -689,6 +714,7 @@ def update_general():
             flash('Logo updated successfully!', 'success')
 
     db.session.commit()
+    log_activity('update', 'general_settings', 'General Settings')
     flash('General settings updated successfully!', 'success')
     return redirect(url_for('admin_dashboard'))
 
@@ -726,6 +752,8 @@ def add_feature():
     )
     db.session.add(feature)
     db.session.commit()
+
+    log_activity('create', 'feature', request.form.get('title'))
     flash('Feature added successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
@@ -767,6 +795,7 @@ def edit_feature(id):
                     return redirect(url_for('edit_feature', id=id))
 
         db.session.commit()
+        log_activity('update', 'feature', feature.title)
         flash('Feature updated successfully!', 'success')
         return redirect(url_for('admin_dashboard'))
 
@@ -780,6 +809,7 @@ def delete_feature(id):
 
     feature = Feature.query.get(id)
     if feature:
+        feature_title = feature.title
         # Delete image file if exists
         if feature.image:
             image_path = os.path.join('static', 'images', 'features', feature.image)
@@ -787,6 +817,7 @@ def delete_feature(id):
                 os.remove(image_path)
         db.session.delete(feature)
         db.session.commit()
+        log_activity('delete', 'feature', feature_title)
         flash('Feature deleted successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
@@ -867,6 +898,7 @@ def add_product():
         db.session.add(product_image)
 
     db.session.commit()
+    log_activity('create', 'product', request.form.get('title'))
     flash('Product added successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
@@ -952,6 +984,7 @@ def edit_product(id):
                             db.session.add(product_image)
 
         db.session.commit()
+        log_activity('update', 'product', product.title)
         flash('Product updated successfully!', 'success')
         return redirect(url_for('admin_dashboard'))
 
@@ -965,6 +998,7 @@ def delete_product(id):
 
     product = Product.query.get(id)
     if product:
+        product_title = product.title
         # Delete main image file if exists
         if product.image:
             if is_cloudinary_configured() and product.image.startswith('http'):
@@ -985,6 +1019,7 @@ def delete_product(id):
 
         db.session.delete(product)
         db.session.commit()
+        log_activity('delete', 'product', product_title)
         flash('Product deleted successfully!', 'success')
 
     return redirect(url_for('admin_dashboard'))
@@ -1007,8 +1042,13 @@ def delete_product_image(id):
         if os.path.exists(image_path):
             os.remove(image_path)
 
+    # Get product name for logging
+    product = Product.query.get(product_id)
+    product_name = product.title if product else f"Product #{product_id}"
+
     db.session.delete(image)
     db.session.commit()
+    log_activity('delete', 'product_image', product_name)
     flash('Gallery image deleted successfully!', 'success')
 
     return redirect(url_for('edit_product', id=product_id))
@@ -1099,6 +1139,17 @@ def admin_history():
     return render_template('admin/history.html', history_entries=history_entries)
 
 
+@app.route('/admin/activity-log')
+def activity_log():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    # Get all activity logs, newest first, limit to last 50
+    activities = ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(50).all()
+
+    return render_template('admin/activity_log.html', activities=activities)
+
+
 @app.route('/admin/rollback/<int:history_id>')
 def admin_rollback(history_id):
     if 'admin' not in session:
@@ -1123,6 +1174,7 @@ def admin_rollback(history_id):
 
     db.session.commit()
 
+    log_activity('rollback', 'content', f"Restored to version from {history.created_at.strftime('%Y-%m-%d %H:%M')}")
     flash('Content successfully restored to previous version!', 'success')
     return redirect(url_for('admin_dashboard'))
 
