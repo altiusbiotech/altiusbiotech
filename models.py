@@ -39,6 +39,7 @@ class Content(db.Model):
     company_name = db.Column(db.String(100), default='ALTIUS BIOTECH')
     company_tagline = db.Column(db.String(200), default='Advancing Science. Elevating Life.')
     footer_text = db.Column(db.Text)
+    logo_url = db.Column(db.String(500))  # Cloudinary URL if uploaded, falls back to static/images/logo.jpg
 
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

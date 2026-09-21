@@ -718,11 +718,21 @@ def update_general():
                 flash('Invalid file type. Only JPG, PNG, GIF, and WEBP files are allowed.', 'danger')
                 return redirect(url_for('admin_dashboard'))
 
-            # Secure the filename to prevent directory traversal
-            secure_filename(logo_file.filename)
-            # Always save as logo.jpg for consistency
-            logo_path = os.path.join('static', 'images', 'logo.jpg')
-            logo_file.save(logo_path)
+            if is_cloudinary_configured():
+                if content.logo_url and content.logo_url.startswith('http'):
+                    delete_file(content.logo_url)
+                logo_url = upload_image(logo_file, folder='altius-biotech/logo')
+                if not logo_url:
+                    flash('Failed to upload logo to cloud storage.', 'danger')
+                    return redirect(url_for('admin_dashboard'))
+                content.logo_url = logo_url
+            else:
+                # Secure the filename to prevent directory traversal
+                secure_filename(logo_file.filename)
+                # Always save as logo.jpg for consistency
+                logo_path = os.path.join('static', 'images', 'logo.jpg')
+                logo_file.save(logo_path)
+                content.logo_url = None
             flash('Logo updated successfully!', 'success')
 
     db.session.commit()
@@ -798,15 +808,22 @@ def add_feature():
         image_file = request.files['feature_image']
         if image_file and image_file.filename:
             if allowed_file(image_file.filename):
-                # Generate unique filename
-                filename = secure_filename(image_file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                image_filename = f"feature_{timestamp}_{filename}"
-                image_path = os.path.join('static', 'images', 'features', image_filename)
+                if is_cloudinary_configured():
+                    image_url = upload_image(image_file, folder='altius-biotech/features')
+                    if not image_url:
+                        flash('Failed to upload image to cloud storage.', 'danger')
+                        return redirect(url_for('admin_dashboard'))
+                    image_filename = image_url
+                else:
+                    # Generate unique filename
+                    filename = secure_filename(image_file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    image_filename = f"feature_{timestamp}_{filename}"
+                    image_path = os.path.join('static', 'images', 'features', image_filename)
 
-                # Create features directory if it doesn't exist
-                os.makedirs(os.path.join('static', 'images', 'features'), exist_ok=True)
-                image_file.save(image_path)
+                    # Create features directory if it doesn't exist
+                    os.makedirs(os.path.join('static', 'images', 'features'), exist_ok=True)
+                    image_file.save(image_path)
             else:
                 flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
                 return redirect(url_for('admin_dashboard'))
@@ -846,18 +863,28 @@ def edit_feature(id):
                 if allowed_file(image_file.filename):
                     # Delete old image if exists
                     if feature.image:
-                        old_image_path = os.path.join('static', 'images', 'features', feature.image)
-                        if os.path.exists(old_image_path):
-                            os.remove(old_image_path)
+                        if is_cloudinary_configured() and feature.image.startswith('http'):
+                            delete_file(feature.image)
+                        else:
+                            old_image_path = os.path.join('static', 'images', 'features', feature.image)
+                            if os.path.exists(old_image_path):
+                                os.remove(old_image_path)
 
-                    # Save new image
-                    filename = secure_filename(image_file.filename)
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    image_filename = f"feature_{timestamp}_{filename}"
-                    image_path = os.path.join('static', 'images', 'features', image_filename)
-                    os.makedirs(os.path.join('static', 'images', 'features'), exist_ok=True)
-                    image_file.save(image_path)
-                    feature.image = image_filename
+                    # Upload new image
+                    if is_cloudinary_configured():
+                        image_url = upload_image(image_file, folder='altius-biotech/features')
+                        if not image_url:
+                            flash('Failed to upload image to cloud storage.', 'danger')
+                            return redirect(url_for('edit_feature', id=id))
+                        feature.image = image_url
+                    else:
+                        filename = secure_filename(image_file.filename)
+                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        image_filename = f"feature_{timestamp}_{filename}"
+                        image_path = os.path.join('static', 'images', 'features', image_filename)
+                        os.makedirs(os.path.join('static', 'images', 'features'), exist_ok=True)
+                        image_file.save(image_path)
+                        feature.image = image_filename
                 else:
                     flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
                     return redirect(url_for('edit_feature', id=id))
@@ -880,9 +907,12 @@ def delete_feature(id):
         feature_title = feature.title
         # Delete image file if exists
         if feature.image:
-            image_path = os.path.join('static', 'images', 'features', feature.image)
-            if os.path.exists(image_path):
-                os.remove(image_path)
+            if is_cloudinary_configured() and feature.image.startswith('http'):
+                delete_file(feature.image)
+            else:
+                image_path = os.path.join('static', 'images', 'features', feature.image)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
         db.session.delete(feature)
         db.session.commit()
         log_activity('delete', 'feature', feature_title)

@@ -6,7 +6,7 @@
     <title>Admin Login - Altius BioTech CMS</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='images/logo.jpg') }}">
+    <link rel="icon" type="image/jpg" href="{{ content.logo_url if content and content.logo_url else url_for('static', filename='images/logo.jpg') }}">
 
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
     <style>

@@ -6,7 +6,7 @@
     <title>{% block title %}Altius BioTech - Premium Medical Aesthetic Technology | Myanmar{% endblock %}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/jpg" href="{{ url_for('static', filename='images/logo.jpg') }}">
+    <link rel="icon" type="image/jpg" href="{{ content.logo_url if content and content.logo_url else url_for('static', filename='images/logo.jpg') }}">
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="{% block description %}ALTIUS BIOTECH - Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc. CE-certified premium technology for healthcare professionals.{% endblock %}">
@@ -20,14 +20,14 @@
     <meta property="og:url" content="https://altiusbiotech.com/">
     <meta property="og:title" content="ALTIUS BIOTECH - Premium Medical Aesthetic Technology">
     <meta property="og:description" content="Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc.">
-    <meta property="og:image" content="https://altiusbiotech.com{{ url_for('static', filename='images/logo.jpg') }}">
+    <meta property="og:image" content="{{ content.logo_url if content and content.logo_url else 'https://altiusbiotech.com' + url_for('static', filename='images/logo.jpg') }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://altiusbiotech.com/">
     <meta property="twitter:title" content="ALTIUS BIOTECH - Premium Medical Aesthetic Technology">
     <meta property="twitter:description" content="Myanmar's premier distributor of advanced medical aesthetic devices from South Korea's DSE Inc.">
-    <meta property="twitter:image" content="https://altiusbiotech.com{{ url_for('static', filename='images/logo.jpg') }}">
+    <meta property="twitter:image" content="{{ content.logo_url if content and content.logo_url else 'https://altiusbiotech.com' + url_for('static', filename='images/logo.jpg') }}">
 
     <!-- Google Structured Data for Logo -->
     <script type="application/ld+json">
@@ -69,7 +69,7 @@
     <nav>
         <div class="nav-container">
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Altius BioTech Logo">
+                <img src="{{ content.logo_url if content and content.logo_url else url_for('static', filename='images/logo.jpg') }}" alt="Altius BioTech Logo">
                 <div class="brand-text">
                     <h3>{{ content.company_name if content and content.company_name else 'ALTIUS BIOTECH' }}</h3>
                     <p>{{ content.company_tagline if content and content.company_tagline else 'Advancing Science. Elevating Life.' }}</p>

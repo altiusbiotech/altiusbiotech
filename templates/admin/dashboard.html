@@ -434,7 +434,7 @@
                     <input type="file" name="logo" accept="image/*">
                     <small style="display: block; margin-top: 0.5rem; color: #6c757d;">Current: logo.jpg (upload new to replace)</small>
                     {% if content %}
-                    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Current Logo" class="image-preview">
+                    <img src="{{ content.logo_url if content and content.logo_url else url_for('static', filename='images/logo.jpg') }}" alt="Current Logo" class="image-preview">
                     {% endif %}
                 </div>
                 <button type="submit" class="btn btn-primary">Save General Settings</button>
