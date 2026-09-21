@@ -52,6 +52,15 @@
         <div class="features-grid">
             {% for feature in features %}
             <div class="feature-box">
+                {% if feature.image %}
+                <div class="feature-icon">
+                    {% if feature.image.startswith('http') %}
+                    <img src="{{ feature.image }}" alt="{{ feature.title }}">
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}">
+                    {% endif %}
+                </div>
+                {% endif %}
                 <h3>{{ feature.title }}</h3>
                 <p>{{ feature.description }}</p>
             </div>
