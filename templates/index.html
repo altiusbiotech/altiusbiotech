@@ -55,9 +55,9 @@
                 {% if feature.image %}
                 <div class="feature-icon">
                     {% if feature.image.startswith('http') %}
-                    <img src="{{ feature.image }}" alt="{{ feature.title }}">
+                    <img src="{{ feature.image }}" alt="{{ feature.title }}" onerror="this.closest('.feature-icon').style.display='none'">
                     {% else %}
-                    <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}">
+                    <img src="{{ url_for('static', filename='images/features/' + feature.image) }}" alt="{{ feature.title }}" onerror="this.closest('.feature-icon').style.display='none'">
                     {% endif %}
                 </div>
                 {% endif %}
