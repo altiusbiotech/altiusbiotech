@@ -857,7 +857,8 @@ def edit_feature(id):
         feature.order = request.form.get('order', 0)
 
         # Handle feature image upload
-        if 'feature_image' in request.files:
+        new_file_provided = 'feature_image' in request.files and request.files['feature_image'].filename
+        if new_file_provided:
             image_file = request.files['feature_image']
             if image_file and image_file.filename:
                 if allowed_file(image_file.filename):
@@ -888,6 +889,15 @@ def edit_feature(id):
                 else:
                     flash('Invalid image file type. Only JPG, PNG, GIF, and WEBP allowed.', 'danger')
                     return redirect(url_for('edit_feature', id=id))
+        elif request.form.get('remove_image') and feature.image:
+            # No new file uploaded, but admin asked to remove the current one
+            if is_cloudinary_configured() and feature.image.startswith('http'):
+                delete_file(feature.image)
+            else:
+                old_image_path = os.path.join('static', 'images', 'features', feature.image)
+                if os.path.exists(old_image_path):
+                    os.remove(old_image_path)
+            feature.image = None
 
         db.session.commit()
         log_activity('update', 'feature', feature.title)
