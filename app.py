@@ -707,6 +707,12 @@ def update_general():
         content.company_tagline = request.form.get('company_tagline')
     if request.form.get('footer_text') is not None:
         content.footer_text = request.form.get('footer_text')
+    if request.form.get('facebook_url') is not None:
+        content.facebook_url = request.form.get('facebook_url')
+    if request.form.get('linkedin_url') is not None:
+        content.linkedin_url = request.form.get('linkedin_url')
+    if request.form.get('instagram_url') is not None:
+        content.instagram_url = request.form.get('instagram_url')
 
     # Handle logo upload with security validation
     if 'logo' in request.files:

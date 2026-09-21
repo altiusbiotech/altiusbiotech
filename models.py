@@ -39,6 +39,11 @@ class Content(db.Model):
     company_name = db.Column(db.String(100), default='ALTIUS BIOTECH')
     company_tagline = db.Column(db.String(200), default='Advancing Science. Elevating Life.')
     footer_text = db.Column(db.Text)
+
+    # Social Links
+    facebook_url = db.Column(db.String(255))
+    linkedin_url = db.Column(db.String(255))
+    instagram_url = db.Column(db.String(255))
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

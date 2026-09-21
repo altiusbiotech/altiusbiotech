@@ -429,6 +429,20 @@
                     <label>Footer Text</label>
                     <textarea name="footer_text">{{ content.footer_text if content else '' }}</textarea>
                 </div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>Facebook URL</label>
+                        <input type="url" name="facebook_url" placeholder="https://www.facebook.com/yourpage" value="{{ content.facebook_url if content else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="url" name="linkedin_url" placeholder="https://www.linkedin.com/company/yourcompany" value="{{ content.linkedin_url if content else '' }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Instagram URL</label>
+                    <input type="url" name="instagram_url" placeholder="https://www.instagram.com/yourprofile" value="{{ content.instagram_url if content else '' }}">
+                </div>
                 <div class="form-group">
                     <label>Logo Image</label>
                     <input type="file" name="logo" accept="image/*">
