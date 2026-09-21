@@ -429,20 +429,6 @@
                     <label>Footer Text</label>
                     <textarea name="footer_text">{{ content.footer_text if content else '' }}</textarea>
                 </div>
-                <div class="grid grid-2">
-                    <div class="form-group">
-                        <label>Facebook URL</label>
-                        <input type="url" name="facebook_url" placeholder="https://www.facebook.com/yourpage" value="{{ content.facebook_url if content else '' }}">
-                    </div>
-                    <div class="form-group">
-                        <label>LinkedIn URL</label>
-                        <input type="url" name="linkedin_url" placeholder="https://www.linkedin.com/company/yourcompany" value="{{ content.linkedin_url if content else '' }}">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Instagram URL</label>
-                    <input type="url" name="instagram_url" placeholder="https://www.instagram.com/yourprofile" value="{{ content.instagram_url if content else '' }}">
-                </div>
                 <div class="form-group">
                     <label>Logo Image</label>
                     <input type="file" name="logo" accept="image/*">
@@ -453,6 +439,61 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Save General Settings</button>
             </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Add Social Link</h3></div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_social_link') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label>Platform Name</label>
+                        <input type="text" name="platform" placeholder="Facebook, WhatsApp, TikTok, etc." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Order (Number)</label>
+                        <input type="number" name="order" value="{{ social_links|length }}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="url" name="url" placeholder="https://wa.me/959xxxxxxxx" required>
+                </div>
+                <button type="submit" class="btn btn-success">Add Social Link</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Existing Social Links</h3></div>
+        <div class="card-body">
+            <div class="item-list">
+                {% for link in social_links %}
+                <form method="POST" action="{{ url_for('edit_social_link', id=link.id) }}" class="item-card" style="flex-wrap: wrap;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group" style="flex: 1; min-width: 150px;">
+                        <label>Platform</label>
+                        <input type="text" name="platform" value="{{ link.platform }}" required>
+                    </div>
+                    <div class="form-group" style="flex: 2; min-width: 200px;">
+                        <label>URL</label>
+                        <input type="url" name="url" value="{{ link.url }}" required>
+                    </div>
+                    <div class="form-group" style="width: 90px;">
+                        <label>Order</label>
+                        <input type="number" name="order" value="{{ link.order }}">
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: flex-end; padding-bottom: 1rem;">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="{{ url_for('delete_social_link', id=link.id) }}" class="btn btn-danger" onclick="return confirm('Delete this social link?')">Delete</a>
+                    </div>
+                </form>
+                {% else %}
+                <p>No social links added yet.</p>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>

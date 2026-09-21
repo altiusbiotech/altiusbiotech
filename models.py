@@ -40,12 +40,15 @@ class Content(db.Model):
     company_tagline = db.Column(db.String(200), default='Advancing Science. Elevating Life.')
     footer_text = db.Column(db.Text)
 
-    # Social Links
-    facebook_url = db.Column(db.String(255))
-    linkedin_url = db.Column(db.String(255))
-    instagram_url = db.Column(db.String(255))
-    
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SocialLink(db.Model):
+    """Social media links shown in the footer - admin can add/remove any platform"""
+    id = db.Column(db.Integer, primary_key=True)
+    platform = db.Column(db.String(50), nullable=False)  # e.g. Facebook, WhatsApp
+    url = db.Column(db.String(500), nullable=False)
+    order = db.Column(db.Integer, default=0)
 
 
 class Feature(db.Model):

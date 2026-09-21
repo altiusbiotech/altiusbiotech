@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
-from models import db, Content, Feature, Product, ProductImage, Admin, ContentHistory, ActivityLog
+from models import db, Content, Feature, Product, ProductImage, Admin, ContentHistory, ActivityLog, SocialLink
 
 # Import Cloudinary helper (will work even if Cloudinary not configured)
 try:
@@ -77,6 +77,7 @@ def inject_globals():
     return {
         'current_year': datetime.now().year,
         'content': Content.query.first(),
+        'social_links': SocialLink.query.order_by(SocialLink.order).all(),
         'master_admin_username': os.environ.get('ADMIN_USERNAME', 'admin')
     }
 
@@ -707,12 +708,6 @@ def update_general():
         content.company_tagline = request.form.get('company_tagline')
     if request.form.get('footer_text') is not None:
         content.footer_text = request.form.get('footer_text')
-    if request.form.get('facebook_url') is not None:
-        content.facebook_url = request.form.get('facebook_url')
-    if request.form.get('linkedin_url') is not None:
-        content.linkedin_url = request.form.get('linkedin_url')
-    if request.form.get('instagram_url') is not None:
-        content.instagram_url = request.form.get('instagram_url')
 
     # Handle logo upload with security validation
     if 'logo' in request.files:
@@ -733,6 +728,62 @@ def update_general():
     db.session.commit()
     log_activity('update', 'general_settings', 'General Settings')
     flash('General settings updated successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/social/add', methods=['POST'])
+def add_social_link():
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    platform = request.form.get('platform', '').strip()
+    url = request.form.get('url', '').strip()
+    if not platform or not url:
+        flash('Platform and URL are required.', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+    social_link = SocialLink(
+        platform=platform,
+        url=url,
+        order=request.form.get('order', 0)
+    )
+    db.session.add(social_link)
+    db.session.commit()
+
+    log_activity('create', 'social_link', platform)
+    flash('Social link added successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/social/edit/<int:id>', methods=['POST'])
+def edit_social_link(id):
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    social_link = SocialLink.query.get_or_404(id)
+    social_link.platform = request.form.get('platform', social_link.platform).strip()
+    social_link.url = request.form.get('url', social_link.url).strip()
+    social_link.order = request.form.get('order', social_link.order)
+    db.session.commit()
+
+    log_activity('update', 'social_link', social_link.platform)
+    flash('Social link updated successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/social/delete/<int:id>')
+def delete_social_link(id):
+    if 'admin' not in session:
+        return redirect(url_for('admin_login'))
+
+    social_link = SocialLink.query.get(id)
+    if social_link:
+        platform = social_link.platform
+        db.session.delete(social_link)
+        db.session.commit()
+        log_activity('delete', 'social_link', platform)
+        flash('Social link deleted successfully!', 'success')
+
     return redirect(url_for('admin_dashboard'))
 
 

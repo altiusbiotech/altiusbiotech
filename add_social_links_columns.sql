@@ -1,13 +1,18 @@
--- Migration: Add social link columns to content table
+-- Migration: Replace fixed social-link columns with a manageable social_link table
 -- Created: 2026-09-21
--- Purpose: Allow admin to set Facebook/LinkedIn/Instagram URLs shown in footer
+-- Purpose: Let admins add/remove/reorder any number of social links (not just FB/LinkedIn/Instagram)
 
-ALTER TABLE content ADD COLUMN IF NOT EXISTS facebook_url VARCHAR(255);
-ALTER TABLE content ADD COLUMN IF NOT EXISTS linkedin_url VARCHAR(255);
-ALTER TABLE content ADD COLUMN IF NOT EXISTS instagram_url VARCHAR(255);
+CREATE TABLE IF NOT EXISTS social_link (
+    id SERIAL PRIMARY KEY,
+    platform VARCHAR(50) NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    "order" INTEGER DEFAULT 0
+);
 
--- Verify the columns were added
-SELECT column_name, data_type, character_maximum_length
-FROM information_schema.columns
-WHERE table_name = 'content'
-  AND column_name IN ('facebook_url', 'linkedin_url', 'instagram_url');
+-- Drop the old fixed columns (superseded by social_link table)
+ALTER TABLE content DROP COLUMN IF EXISTS facebook_url;
+ALTER TABLE content DROP COLUMN IF EXISTS linkedin_url;
+ALTER TABLE content DROP COLUMN IF EXISTS instagram_url;
+
+-- Verify
+SELECT table_name, column_name FROM information_schema.columns WHERE table_name = 'social_link' ORDER BY ordinal_position;
